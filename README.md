@@ -1,10 +1,10 @@
 # Sistem Peminjaman Peralatan Laboratorium
 
-Program berbasis terminal untuk mencatat peminjaman alat di laboratorium kampus. Ditulis dengan Python murni (tanpa library tambahan dan tanpa database), memakai pendekatan OOP, dan struktur class-nya mengikuti UML yang diminta di modul.
+Program terminal untuk mencatat peminjaman alat di laboratorium.
 
-Semua data disimpan di memori lewat `dict` dan `list`, jadi begitu program ditutup datanya ikut hilang. Ini memang disengaja sesuai ketentuan tugas.
+Data hanya disimpan sementara di memori, jadi akan hilang saat program ditutup. Memang tidak memakai database sesuai ketentuan tugas.
 
-## Yang bisa dilakukan program ini
+## Kemampuan Program
 
 - Mengelola data mahasiswa (tambah, edit, hapus, cari, tampilkan).
 - Mengelola data alat beserta kategorinya.
@@ -13,19 +13,6 @@ Semua data disimpan di memori lewat `dict` dan `list`, jadi begitu program ditut
 - Menandai transaksi yang terlambat.
 - Mengatur alat yang rusak agar tidak bisa dipinjam sampai selesai diperbaiki.
 - Menampilkan riwayat peminjaman dan statistik sederhana.
-
-## Cara menjalankan
-
-Butuh Python 3.10 atau lebih baru (kode memakai penulisan tipe seperti `Mahasiswa | None` dan `list[str]`).
-
-```bash
-cd sistem_peminjaman_lab_terstruktur
-python main.py
-```
-
-Kalau `python` tidak dikenali, coba `python3 main.py`. Untuk keluar kapan saja bisa pakai menu `0` atau tekan `Ctrl+C`.
-
-Warna di terminal akan mati sendiri kalau output bukan terminal, atau kalau variabel lingkungan `NO_COLOR` diset.
 
 ## Struktur folder
 
@@ -66,6 +53,7 @@ Isinya class-class data:
 | `Transaksi` | Satu kali peminjaman: peminjam, daftar item, tanggal pinjam, batas kembali, dan status. |
 
 Ada juga dua enum:
+(Enum adalah tipe data yang nilainya dibatasi pada pilihan tetap yang sudah didaftarkan. Dengan begitu, status atau kondisi tidak bisa terisi teks sembarangan, dan salah ketik langsung ketahuan sebagai error (misalnya KondisiAlat.BAIKK tidak akan dikenali).)
 
 - `StatusTransaksi`: `DIPINJAM`, `SEBAGIAN_DIKEMBALIKAN`, `SELESAI`
 - `KondisiAlat`: `BAIK`, `RUSAK_RINGAN`, `RUSAK_BERAT`
