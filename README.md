@@ -125,17 +125,16 @@ MenuApp
 ## 4. Cara Menjalankan Aplikasi
 
 ### Prasyarat
-- **Python 3.10 atau lebih baru** (memakai sintaks seperti `list[str]` dan `Mahasiswa | None`).
-- Tidak memerlukan instalasi pustaka tambahan.
-- Terminal yang mendukung UTF-8 agar simbol kotak dan ikon tampil dengan benar.
+- **Python 3.10 atau lebih baru**.
+- Terminal yang mendukung agar simbol kotak dan ikon tampil dengan benar.
 
 ### Langkah-langkah
-1. Ekstrak file ZIP `sistem_peminjaman_lab_terstruktur`.
+1. Masuk ke folder proyek.
 2. Buka terminal/Command Prompt pada folder yang berisi `main.py`:
    ```bash
    cd sistem_peminjaman_lab_terstruktur
    ```
-3. Jalankan aplikasi:
+2. Jalankan aplikasi:
    ```bash
    python main.py
    ```
