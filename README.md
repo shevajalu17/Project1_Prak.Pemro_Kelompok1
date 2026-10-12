@@ -1,211 +1,164 @@
-# Sistem Peminjaman Peralatan Laboratorium
+# Sistem Peminjaman Alat LAB
 
-Program terminal untuk mencatat peminjaman alat di laboratorium.
+Aplikasi berbasis terminal (CLI) untuk mengelola peminjaman peralatan laboratorium. Aplikasi dibuat dengan Python menggunakan pendekatan *Object-Oriented Programming* (OOP) dan struktur data bawaan (`dict` dan `list`), tanpa database dan tanpa pustaka eksternal.
 
-Data hanya disimpan sementara di memori, jadi akan hilang saat program ditutup. Memang tidak memakai database sesuai ketentuan tugas.
+---
 
-## Kemampuan Program
+## 1. Anggota Kelompok
 
-- Mengelola data mahasiswa (tambah, edit, hapus, cari, tampilkan).
-- Mengelola data alat beserta kategorinya.
-- Membuat transaksi peminjaman, satu transaksi boleh berisi beberapa alat.
-- Memproses pengembalian alat satu per satu, lengkap dengan pencatatan kondisinya.
-- Menandai transaksi yang terlambat.
-- Mengatur alat yang rusak agar tidak bisa dipinjam sampai selesai diperbaiki.
-- Menampilkan riwayat peminjaman dan statistik sederhana.
+| No | Nama                    | NIM      |
+|----|-------------------------|----------|
+| 1  | Fathma Daniswara T.P    | K3525060 |
+| 2  | Muhammad Ammar Fathin   | K3525065 |
+| 3  | Sheva Jalu Atmaja       | K3525073 |
+| 4  | Bhakti Rega Riana       | K3525088 |
 
-## Struktur folder
+---
+
+## 2. Deskripsi Sistem
+
+**Sistem Peminjaman Alat LAB** membantu pengelola laboratorium mencatat data mahasiswa, data peralatan, serta proses peminjaman dan pengembalian alat. Seluruh interaksi dilakukan melalui menu bernomor di terminal, dengan tampilan tabel berbingkai, warna status, dan pesan berikon (`✔` berhasil, `✘` gagal, `!` peringatan).
+
+### Kemampuan Sistem
+
+**Kelola Mahasiswa**
+- Menambah, mengubah, menghapus, mencari (berdasarkan NIM atau nama), dan menampilkan seluruh mahasiswa.
+- NIM bersifat unik dan semua kolom wajib diisi.
+- Mahasiswa yang masih memiliki transaksi aktif tidak dapat dihapus.
+
+**Kelola Peralatan dan Kategori**
+- Menambah, mengubah, menghapus, mencari (berdasarkan kode, nama, atau kategori), dan menampilkan seluruh alat.
+- Menambah dan menampilkan kategori alat beserta jumlah alat pada tiap kategori. Kategori awal: `K01` Perangkat Komputasi, `K02` Perangkat Jaringan, `K03` Perangkat Multimedia.
+- Alat yang sedang dipinjam tidak dapat diubah, dan alat yang sedang dipinjam atau tercatat pada transaksi aktif tidak dapat dihapus.
+
+**Transaksi Peminjaman**
+- Satu transaksi dapat memuat beberapa alat sekaligus (kode alat dipisahkan koma).
+- Lama peminjaman 1–7 hari, batas kembali dihitung otomatis dari tanggal hari ini.
+- Setiap mahasiswa maksimal memiliki 2 transaksi aktif.
+- Seluruh alat divalidasi terlebih dahulu sebelum transaksi disimpan, sehingga tidak ada perubahan setengah jalan jika terjadi kesalahan.
+- ID transaksi dibuat otomatis (`TRX001`, `TRX002`, dst.).
+
+**Pengembalian Alat**
+- Alat dikembalikan satu per satu dengan mencatat kondisi: `BAIK`, `RUSAK_RINGAN`, atau `RUSAK_BERAT`.
+- Status transaksi berubah otomatis: `DIPINJAM` → `SEBAGIAN_DIKEMBALIKAN` → `SELESAI`.
+- Transaksi yang melewati batas kembali ditandai `TERLAMBAT` beserta jumlah hari keterlambatan.
+
+**Pemeliharaan Alat**
+- Alat yang dikembalikan dalam kondisi rusak otomatis masuk status pemeliharaan dan tidak tersedia untuk dipinjam.
+- Setelah diperbaiki, alat dikembalikan ke status tersedia melalui menu pemeliharaan.
+
+**Pelaporan**
+- Daftar alat tersedia, alat sedang dipinjam, dan alat rusak/pemeliharaan.
+- Pencarian transaksi dan riwayat peminjaman per mahasiswa.
+- Statistik: total transaksi aktif/selesai, jumlah mahasiswa dan alat terdaftar, 5 alat paling sering dipinjam, dan 5 mahasiswa paling sering meminjam (dilengkapi grafik batang).
+
+### Aturan Bisnis
+
+| Aturan | Keterangan |
+|--------|------------|
+| Batas transaksi aktif | Maksimal 2 transaksi aktif per mahasiswa |
+| Durasi pinjam | 1–7 hari |
+| Alat tersedia | Kondisi `BAIK`, tidak sedang dipinjam, dan tidak dalam pemeliharaan |
+| Kode alat dalam satu transaksi | Tidak boleh duplikat |
+| Penyimpanan data | Hanya di memori; data hilang saat program ditutup |
+
+---
+
+## 3. Struktur Program
 
 ```text
 sistem_peminjaman_lab_terstruktur/
-├── main.py                    # titik masuk program
+├── main.py                      # titik masuk aplikasi
+├── README.md                    # dokumentasi
 └── app/
-    ├── entities.py            # class model + enum
-    ├── mahasiswa_manager.py   # logika data mahasiswa
-    ├── peralatan_manager.py   # logika data alat & kategori
-    ├── transaksi_manager.py   # logika peminjaman & pengembalian
-    ├── tampilan.py            # helper tampilan (tabel, warna, kotak menu)
-    └── menu_app.py            # menu & interaksi dengan pengguna
+    ├── __init__.py              # penanda paket
+    ├── entities.py              # model data dan enum
+    ├── mahasiswa_manager.py     # CRUD dan pencarian mahasiswa
+    ├── peralatan_manager.py     # CRUD alat/kategori, stok, pemeliharaan
+    ├── transaksi_manager.py     # peminjaman, pengembalian, riwayat, statistik
+    ├── tampilan.py              # pembantu tampilan terminal
+    └── menu_app.py              # MenuApp: antarmuka dan alur menu
 ```
 
-Programnya dibagi menjadi tiga lapisan supaya tiap file punya tugas yang jelas:
+### Penjelasan Tiap File
 
-1. **Model** (`entities.py`): menyimpan data dan aturan yang menempel pada objek itu sendiri.
-2. **Manager** (`*_manager.py`): menjalankan operasi dan aturan bisnis di atas kumpulan objek.
-3. **Antarmuka** (`menu_app.py` dan `tampilan.py`): menerima input, memanggil manager, lalu menampilkan hasilnya.
+| File | Isi dan Tanggung Jawab |
+|------|------------------------|
+| `main.py` | Menjalankan `MenuApp`, mengatur encoding UTF-8 pada terminal, dan menangani `Ctrl+C`/`EOF` agar program berhenti dengan rapi. |
+| `entities.py` | Class model: `Kategori`, `Mahasiswa`, `Peralatan`, `ItemPinjam`, `Transaksi`, serta enum `StatusTransaksi` dan `KondisiAlat`. Berisi logika dasar tiap entitas (misalnya `bisaMeminjam()`, `isTersedia()`, `perbaruiStatus()`). |
+| `mahasiswa_manager.py` | `MahasiswaManager`: tambah, edit, hapus, cari, dan tampilkan mahasiswa. Data disimpan dalam `dict` dengan NIM sebagai kunci. |
+| `peralatan_manager.py` | `PeralatanManager`: kelola alat dan kategori, daftar alat (tersedia/dipinjam/rusak), serta `selesaikanPemeliharaan()`. |
+| `transaksi_manager.py` | `TransaksiManager`: `buatTransaksi()` dengan validasi aturan bisnis, `prosesPengembalian()`, pencarian/riwayat transaksi, dan `statistik()`. |
+| `tampilan.py` | Fungsi pembantu tampilan: warna ANSI, banner, kotak menu, tabel berbingkai, grafik batang, dan input. Warna otomatis nonaktif bila output bukan terminal atau variabel `NO_COLOR` diset. |
+| `menu_app.py` | `MenuApp`: menghubungkan semua manager, menyiapkan data awal (kategori), dan menampilkan menu serta interaksi pengguna. |
 
-Manager sama sekali tidak memakai `print` atau `input`. Semua interaksi dengan pengguna ada di `menu_app.py`, jadi logikanya bisa dipakai ulang atau dites tanpa menyentuh terminal.
+### Hubungan Antar Class
 
-## Penjelasan tiap bagian
+```text
+MenuApp
+ ├── MahasiswaManager ──► Mahasiswa
+ ├── PeralatanManager ──► Peralatan ──► Kategori
+ └── TransaksiManager ──► Transaksi ──► ItemPinjam ──► Peralatan
+                              └──────► Mahasiswa
+```
 
-### `main.py`
-Hanya membuat objek `MenuApp` lalu menjalankannya. Di sini juga ada pengaturan encoding UTF-8 supaya karakter kotak dan simbol (`✔`, `✘`, `═`) tampil benar, serta penanganan `Ctrl+C` agar program berhenti dengan rapi.
-
-### `entities.py`
-Isinya class-class data:
-
-| Class | Fungsi |
-|---|---|
-| `Kategori` | Pengelompokan alat (id dan nama). |
-| `Mahasiswa` | NIM, nama, no. HP, dan daftar ID transaksi yang sedang aktif. |
-| `Peralatan` | Kode, nama, kategori, kondisi, serta penanda sedang dipinjam atau dalam pemeliharaan. |
-| `ItemPinjam` | Satu alat di dalam satu transaksi, lengkap dengan tanggal dan kondisi saat dikembalikan. |
-| `Transaksi` | Satu kali peminjaman: peminjam, daftar item, tanggal pinjam, batas kembali, dan status. |
-
-Ada juga dua enum:
-(Enum adalah tipe data yang nilainya dibatasi pada pilihan tetap yang sudah didaftarkan. Dengan begitu, status atau kondisi tidak bisa terisi teks sembarangan, dan salah ketik langsung ketahuan sebagai error (misalnya KondisiAlat.BAIKK tidak akan dikenali).)
-
-- `StatusTransaksi`: `DIPINJAM`, `SEBAGIAN_DIKEMBALIKAN`, `SELESAI`
-- `KondisiAlat`: `BAIK`, `RUSAK_RINGAN`, `RUSAK_BERAT`
-
-Beberapa method penting:
-
-- `Peralatan.isTersedia()` bernilai true hanya jika kondisi `BAIK`, tidak sedang dipinjam, dan tidak dalam pemeliharaan.
-- `Mahasiswa.bisaMeminjam()` bernilai true selama transaksi aktifnya kurang dari 2.
-- `ItemPinjam.kembalikan()` mencatat tanggal dan kondisi, lalu memanggil `Peralatan.terimaKembali()`. Kalau item sudah pernah dikembalikan, akan muncul `ValueError`.
-- `Transaksi.perbaruiStatus()` menghitung ulang status berdasarkan jumlah item yang sudah dan belum kembali. Kalau semuanya sudah kembali, status menjadi `SELESAI` dan transaksi dilepas dari daftar aktif mahasiswa.
-
-### `mahasiswa_manager.py`
-Data disimpan dalam `dict` dengan NIM sebagai kunci, jadi pencarian per NIM langsung tanpa perulangan. Menyediakan `tambah`, `edit`, `hapus`, `cari` (berdasarkan NIM atau nama, tidak peduli huruf besar/kecil), `getByNim`, dan `tampilkanSemua`.
-
-Mahasiswa yang masih punya transaksi aktif tidak bisa dihapus.
-
-### `peralatan_manager.py`
-Mengurus `dict` alat dan `dict` kategori. Selain CRUD, ada beberapa fungsi penyaring: `daftarTersedia`, `daftarDipinjam`, `daftarRusak`, dan `selesaikanPemeliharaan`.
-
-Ada satu hal yang agak unik di sini: atribut `adaDalamTransaksiAktif` awalnya hanya lambda yang selalu mengembalikan `False`. `MenuApp` menggantinya dengan method milik `TransaksiManager` saat inisialisasi. Cara ini dipakai supaya `PeralatanManager` bisa mengecek transaksi aktif sebelum menghapus alat tanpa harus saling mengimpor dengan `TransaksiManager`.
-
-### `transaksi_manager.py`
-Bagian yang paling banyak aturannya. Method utamanya:
-
-- `buatTransaksi(nim, listKodeAlat, lamaHari)` membuat transaksi baru.
-- `prosesPengembalian(idTrx, kodeAlat, kondisi)` mencatat pengembalian satu alat.
-- `cariByMahasiswa` dan `riwayatMahasiswa` mengambil transaksi milik satu NIM.
-- `adaAlatDalamTransaksiAktif` dipakai untuk mengecek apakah alat boleh dihapus.
-- `statistik` menghitung jumlah transaksi aktif/selesai serta frekuensi pemakaian alat dan mahasiswa.
-
-ID transaksi dibuat otomatis dengan format `TRX001`, `TRX002`, dan seterusnya.
-
-### `tampilan.py`
-Kumpulan fungsi kecil untuk merapikan tampilan: pesan status berwarna, banner, kotak menu, tabel berbingkai, dan grafik batang dari karakter. Hanya memakai library standar.
-
-### `menu_app.py`
-Class `MenuApp` membuat ketiga manager, menyambungkannya, lalu menampilkan menu dalam sebuah perulangan sampai pengguna memilih keluar. Pemilihan menu memakai dictionary yang memetakan nomor ke method, jadi tidak ada rantai `if/elif` yang panjang di menu utama. Input yang menimbulkan `ValueError` atau `KeyError` ditangkap di sini supaya program tidak langsung berhenti.
-
-Saat pertama dijalankan, data yang sudah ada hanya tiga kategori bawaan:
-
-- `K01` Perangkat Komputasi
-- `K02` Perangkat Jaringan
-- `K03` Perangkat Multimedia
-
-Data mahasiswa dan alat masih kosong dan harus ditambahkan lewat menu.
-
-## Menu utama
+### Menu Utama
 
 | No | Menu |
-|---|---|
-| 1 | Kelola mahasiswa |
-| 2 | Kelola peralatan (termasuk kategori) |
-| 3 | Buat transaksi peminjaman |
-| 4 | Tampilkan semua transaksi |
-| 5 | Proses pengembalian alat |
-| 6 | Cari transaksi berdasarkan mahasiswa |
-| 7 | Tampilkan alat tersedia |
-| 8 | Tampilkan alat sedang dipinjam |
-| 9 | Tampilkan alat rusak/pemeliharaan |
+|----|------|
+| 1  | Kelola mahasiswa |
+| 2  | Kelola peralatan |
+| 3  | Buat transaksi peminjaman |
+| 4  | Tampilkan transaksi |
+| 5  | Proses pengembalian alat |
+| 6  | Cari transaksi berdasarkan mahasiswa |
+| 7  | Tampilkan alat tersedia |
+| 8  | Tampilkan alat sedang dipinjam |
+| 9  | Tampilkan alat rusak/pemeliharaan |
 | 10 | Riwayat peminjaman mahasiswa |
 | 11 | Statistik peminjaman |
 | 12 | Selesaikan pemeliharaan alat |
-| 0 | Keluar |
+| 0  | Keluar |
 
-## Alur program
+---
 
-### Alur umum
+## 4. Cara Menjalankan Aplikasi
 
-```text
-main.py
-  └─ MenuApp()
-       ├─ buat MahasiswaManager, PeralatanManager, TransaksiManager
-       ├─ sambungkan pengecekan transaksi aktif ke PeralatanManager
-       └─ isi kategori awal
-  └─ jalankan()
-       └─ loop: tampilkan menu → baca pilihan → panggil method → ulangi
-```
+### Prasyarat
+- **Python 3.10 atau lebih baru** (memakai sintaks seperti `list[str]` dan `Mahasiswa | None`).
+- Tidak memerlukan instalasi pustaka tambahan.
+- Terminal yang mendukung UTF-8 agar simbol kotak dan ikon tampil dengan benar.
 
-### Alur peminjaman (menu 3)
+### Langkah-langkah
+1. Ekstrak file ZIP `sistem_peminjaman_lab_terstruktur`.
+2. Buka terminal/Command Prompt pada folder yang berisi `main.py`:
+   ```bash
+   cd sistem_peminjaman_lab_terstruktur
+   ```
+3. Jalankan aplikasi:
+   ```bash
+   python main.py
+   ```
+   (atau `python3 main.py` pada Linux/macOS)
+4. Pilih menu dengan mengetik nomor, lalu tekan **Enter**. Ketik `0` untuk keluar, atau tekan `Ctrl+C` kapan saja.
 
-```text
-Input NIM
-  └─ mahasiswa ada?                                   tidak → gagal
-Tampilkan alat yang tersedia
-Input kode alat (pisah koma) dan lama pinjam
-  └─ TransaksiManager.buatTransaksi() memeriksa berurutan:
-       1. mahasiswa ada
-       2. transaksi aktif mahasiswa kurang dari 2
-       3. daftar alat tidak kosong
-       4. tidak ada kode alat ganda
-       5. lama pinjam 1–7 hari
-       6. setiap alat ada dan masih tersedia
-  └─ semua lolos?
-       ├─ ya   → buat TRXxxx, tandai tiap alat "dipinjam",
-       │         tambahkan ke transaksi aktif mahasiswa
-       └─ tidak → pesan kesalahan, tidak ada data yang berubah
-```
+### Contoh Alur Penggunaan
+1. Menu **1** → tambah mahasiswa (NIM, nama, no. HP).
+2. Menu **2** → tambah alat (kode, nama, ID kategori).
+3. Menu **3** → buat transaksi: masukkan NIM, kode alat (contoh `A01,A02`), dan lama pinjam (1–7).
+4. Menu **5** → proses pengembalian: pilih ID transaksi, kode alat, dan kondisi alat.
+5. Menu **12** → selesaikan pemeliharaan jika ada alat yang dikembalikan dalam kondisi rusak.
+6. Menu **11** → lihat statistik peminjaman.
 
-Semua validasi dilakukan lebih dulu, baru data diubah di akhir. Jadi kalau salah satu alat ternyata tidak tersedia, tidak ada alat lain yang sempat ikut tercatat dipinjam.
+> **Catatan:** Data hanya tersimpan di memori. Semua data akan hilang saat program ditutup.
 
-### Alur pengembalian (menu 5)
+---
 
-```text
-Tampilkan transaksi aktif
-Input ID transaksi
-Tampilkan alat yang belum kembali
-Input kode alat dan pilih kondisi (1 BAIK / 2 RUSAK_RINGAN / 3 RUSAK_BERAT)
-  └─ prosesPengembalian()
-       ├─ ItemPinjam.kembalikan()    → catat tanggal & kondisi
-       │    └─ Peralatan.terimaKembali()
-       │         ├─ BAIK   → alat langsung tersedia lagi
-       │         └─ rusak  → alat masuk pemeliharaan
-       └─ Transaksi.perbaruiStatus()
-            ├─ masih ada alat belum kembali → SEBAGIAN_DIKEMBALIKAN
-            └─ semua sudah kembali          → SELESAI
-                                              (jatah transaksi mahasiswa berkurang)
-```
+## 5. Pembagian Kontribusi Anggota
 
-Pengembalian bisa dilakukan bertahap. Selama masih ada alat yang belum kembali, transaksi tetap dianggap aktif dan tetap menghabiskan satu dari dua jatah transaksi mahasiswa itu.
-
-### Alur alat rusak (menu 9 dan 12)
-
-```text
-Alat dikembalikan dengan kondisi RUSAK_RINGAN / RUSAK_BERAT
-  └─ dalamPemeliharaan = True  → tidak lolos isTersedia(), tidak bisa dipinjam
-Setelah diperbaiki → menu 12 → selesaikanPemeliharaan()
-  └─ kondisi kembali BAIK, dalamPemeliharaan = False → alat tersedia lagi
-```
-
-## Aturan bisnis
-
-- Satu transaksi boleh berisi lebih dari satu alat, tapi kode alat tidak boleh dobel.
-- Satu mahasiswa maksimal punya 2 transaksi aktif sekaligus.
-- Lama peminjaman 1 sampai 7 hari.
-- Batas kembali dihitung dari tanggal pinjam ditambah lama hari.
-- Alat hanya bisa dipinjam jika kondisinya baik, tidak sedang dipinjam, dan tidak dalam pemeliharaan.
-- Alat yang dikembalikan dalam keadaan rusak harus lewat menu pemeliharaan dulu sebelum bisa dipinjam lagi.
-- Mahasiswa tidak bisa dihapus selama masih punya transaksi aktif.
-- Alat tidak bisa dihapus kalau sedang dipinjam atau masih tercatat di transaksi aktif.
-- Alat tidak bisa diedit selama sedang dipinjam.
-- Transaksi aktif yang melewati batas kembali ditandai `TERLAMBAT` beserta jumlah harinya. Tidak ada denda atau pembatasan otomatis, hanya penanda di tampilan.
-
-## Statistik
-
-Menu 11 menampilkan ringkasan (total, aktif, selesai, jumlah mahasiswa dan alat terdaftar), lalu dua peringkat teratas lengkap dengan grafik batang: 5 alat yang paling sering dipinjam dan 5 mahasiswa yang paling sering meminjam. Kalau datanya sudah dihapus, namanya tampil sebagai `(dihapus)`.
-
-## Keterbatasan
-
-- Data tidak tersimpan setelah program ditutup.
-- Pengecekan terlambat memakai tanggal sistem (`date.today()`), jadi hasilnya bergantung pada jam komputer.
-- Program berjalan untuk satu pengguna di satu terminal, tidak ada sistem login atau peran.
-
-## Catatan UML
-
-Nama class dan method utama dipertahankan seperti di diagram: `MenuApp`, `MahasiswaManager`, `TransaksiManager`, `PeralatanManager`, `Mahasiswa`, `Transaksi`, `Peralatan`, `Kategori`, `ItemPinjam`, `StatusTransaksi`, dan `KondisiAlat`. Ada beberapa method tambahan yang tidak ada di diagram, seperti `selesaikanPemeliharaan`, `adaAlatDalamTransaksiAktif`, dan `statistik`, untuk keperluan validasi, pemeliharaan, dan statistik.
+| Nama | NIM | Kontribusi |
+|------|-----|------------|
+| Fathma Daniswara T.P | K3525060 | `peralatan_manager.py` |
+| Muhammad Ammar Fathin | K3525065 | `menu_app.py`, `tampilan.py`, `main.py` |
+| Sheva Jalu Atmaja | K3525073 | `entities.py`, `mahasiswa_manager.py`, `README.md` |
+| Bhakti Rega Riana | K3525088 | `transaksi_manager.py` |
