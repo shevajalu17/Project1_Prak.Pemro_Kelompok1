@@ -1,4 +1,3 @@
-from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
 from typing import Optional
@@ -16,21 +15,30 @@ class KondisiAlat(Enum):
     RUSAK_BERAT = "RUSAK_BERAT"
 
 
-@dataclass
 class Kategori:
     idKategori: str
     namaKategori: str
+
+    def __init__(self, idKategori: str, namaKategori: str):
+        self.idKategori = idKategori
+        self.namaKategori = namaKategori
 
     def getNama(self) -> str:
         return self.namaKategori
 
 
-@dataclass
 class Mahasiswa:
     nim: str
     nama: str
     noHp: str
-    transaksiAktif: list[str] = field(default_factory=list)
+    transaksiAktif: list[str]
+
+    def __init__(self, nim: str, nama: str, noHp: str,
+                 transaksiAktif: Optional[list[str]] = None):
+        self.nim = nim
+        self.nama = nama
+        self.noHp = noHp
+        self.transaksiAktif = transaksiAktif if transaksiAktif is not None else []
 
     @property
     def statusAktifPeminjaman(self) -> bool:
@@ -54,15 +62,26 @@ class Mahasiswa:
         self.nama, self.noHp = nama, noHp
 
 
-@dataclass
 class Peralatan:
     kodeAlat: str
     namaAlat: str
     kategori: Kategori
-    kondisi: KondisiAlat = KondisiAlat.BAIK
-    dipinjam: bool = False
-    totalDipinjam: int = 0
-    dalamPemeliharaan: bool = False
+    kondisi: KondisiAlat
+    dipinjam: bool
+    totalDipinjam: int
+    dalamPemeliharaan: bool
+
+    def __init__(self, kodeAlat: str, namaAlat: str, kategori: Kategori,
+                 kondisi: KondisiAlat = KondisiAlat.BAIK,
+                 dipinjam: bool = False, totalDipinjam: int = 0,
+                 dalamPemeliharaan: bool = False):
+        self.kodeAlat = kodeAlat
+        self.namaAlat = namaAlat
+        self.kategori = kategori
+        self.kondisi = kondisi
+        self.dipinjam = dipinjam
+        self.totalDipinjam = totalDipinjam
+        self.dalamPemeliharaan = dalamPemeliharaan
 
     def isTersedia(self) -> bool:
         return (self.kondisi == KondisiAlat.BAIK and not self.dipinjam
@@ -75,18 +94,23 @@ class Peralatan:
     def terimaKembali(self, kondisi: KondisiAlat) -> None:
         self.dipinjam = False
         self.kondisi = kondisi
-        # Sesuai modul: kondisi selain BAIK tidak boleh masuk stok tersedia.
         self.dalamPemeliharaan = kondisi != KondisiAlat.BAIK
 
     def ubahData(self, nama: str, kategori: Kategori) -> None:
         self.namaAlat, self.kategori = nama, kategori
 
 
-@dataclass
 class ItemPinjam:
     alat: Peralatan
-    tanggalKembali: Optional[date] = None
-    kondisiKembali: Optional[KondisiAlat] = None
+    tanggalKembali: Optional[date]
+    kondisiKembali: Optional[KondisiAlat]
+
+    def __init__(self, alat: Peralatan,
+                 tanggalKembali: Optional[date] = None,
+                 kondisiKembali: Optional[KondisiAlat] = None):
+        self.alat = alat
+        self.tanggalKembali = tanggalKembali
+        self.kondisiKembali = kondisiKembali
 
     def sudahKembali(self) -> bool:
         return self.tanggalKembali is not None
@@ -99,14 +123,24 @@ class ItemPinjam:
         self.alat.terimaKembali(kondisi)
 
 
-@dataclass
 class Transaksi:
     idTransaksi: str
     mahasiswa: Mahasiswa
     daftarItem: list[ItemPinjam]
     tanggalPinjam: date
     batasKembali: date
-    status: StatusTransaksi = StatusTransaksi.DIPINJAM
+    status: StatusTransaksi
+
+    def __init__(self, idTransaksi: str, mahasiswa: Mahasiswa,
+                 daftarItem: list[ItemPinjam], tanggalPinjam: date,
+                 batasKembali: date,
+                 status: StatusTransaksi = StatusTransaksi.DIPINJAM):
+        self.idTransaksi = idTransaksi
+        self.mahasiswa = mahasiswa
+        self.daftarItem = daftarItem
+        self.tanggalPinjam = tanggalPinjam
+        self.batasKembali = batasKembali
+        self.status = status
 
     def tambahItem(self, alat: Peralatan) -> None:
         self.daftarItem.append(ItemPinjam(alat))
